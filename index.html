@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .transaction-item:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-gray-900">Personal Finance Dashboard</h1>
+            <p class="text-gray-600 mt-2">Take control of your financial health.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Summary and Form -->
+            <div class="lg:col-span-1 space-y-8">
+                <!-- Balance Summary Cards -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Account Summary</h2>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <h3 class="text-sm font-medium text-blue-600">Total Balance</h3>
+                            <p id="balance" class="text-3xl font-bold text-blue-800">$0.00</p>
+                        </div>
+                        <div class="flex space-x-4">
+                            <div class="flex-1 p-4 bg-green-50 rounded-lg">
+                                <h3 class="text-sm font-medium text-green-600">Total Income</h3>
+                                <p id="income" class="text-xl font-bold text-green-800">$0.00</p>
+                            </div>
+                            <div class="flex-1 p-4 bg-red-50 rounded-lg">
+                                <h3 class="text-sm font-medium text-red-600">Total Expenses</h3>
+                                <p id="expense" class="text-xl font-bold text-red-800">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Transaction Form -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Add New Transaction</h2>
+                    <form id="transaction-form" class="space-y-4">
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                            <input type="text" id="description" placeholder="e.g., Groceries, Salary" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label for="amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                            <input type="number" id="amount" placeholder="Enter amount" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" min="0.01" step="0.01" required>
+                        </div>
+                        <div>
+                            <label for="type" class="block text-sm font-medium text-gray-700">Type</label>
+                            <select id="type" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                            <i class="fas fa-plus mr-2"></i>Add Transaction
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: History and Charts -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Transaction History -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Transaction History</h2>
+                    <ul id="transaction-list" class="space-y-2">
+                        <!-- Transactions will be dynamically inserted here -->
+                         <li class="text-center text-gray-500 py-4">No transactions yet.</li>
+                    </ul>
+                </div>
+
+                <!-- Expense Breakdown Chart -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Expense Breakdown</h2>
+                    <div class="h-64 md:h-80 flex items-center justify-center">
+                        <canvas id="expense-chart"></canvas>
+                    </div>
+                </div>
+                 <!-- Financial Tip -->
+                <div class="card bg-teal-50 border-l-4 border-teal-500">
+                    <div class="flex">
+                        <div class="py-1"><i class="fas fa-lightbulb fa-2x text-teal-500 mx-4"></i></div>
+                        <div>
+                            <p class="font-bold text-teal-800">Financial Tip of the Day</p>
+                            <p id="financial-tip" class="text-sm text-teal-700">Loading tip...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const balanceEl = document.getElementById('balance');
+            const incomeEl = document.getElementById('income');
+            const expenseEl = document.getElementById('expense');
+            const transactionListEl = document.getElementById('transaction-list');
+            const form = document.getElementById('transaction-form');
+            const descriptionInput = document.getElementById('description');
+            const amountInput = document.getElementById('amount');
+            const typeSelect = document.getElementById('type');
+            const tipEl = document.getElementById('financial-tip');
+
+            // Load transactions from local storage
+            const localStorageTransactions = JSON.parse(localStorage.getItem('transactions'));
+            let transactions = localStorage.getItem('transactions') !== null ? localStorageTransactions : [];
+
+            // Financial Tips
+            const financialTips = [
+                "Create a budget and stick to it. Knowing where your money goes is the first step to financial control.",
+                "Pay yourself first. Automatically save a portion of your income before you spend anything.",
+                "Build an emergency fund. Aim to have 3-6 months of living expenses saved for unexpected events.",
+                "Review your subscriptions regularly. Cancel any services you no longer use.",
+                "Use the '30-day rule' for large purchases. Wait 30 days before buying non-essential items to avoid impulse spending.",
+                "Automate your bill payments to avoid late fees.",
+                "Set clear financial goals, like saving for a down payment or retirement, to stay motivated.",
+                "Cook at home more often to save money on dining out."
+            ];
+
+            // Add transaction function
+            function addTransaction(e) {
+                e.preventDefault();
+
+                if (descriptionInput.value.trim() === '' || amountInput.value.trim() === '') {
+                    // Simple validation
+                    alert('Please add a description and amount');
+                    return;
+                }
+
+                const transaction = {
+                    id: generateID(),
+                    description: descriptionInput.value,
+                    amount: +amountInput.value, // Convert to number
+                    type: typeSelect.value
+                };
+
+                transactions.push(transaction);
+                addTransactionDOM(transaction);
+                updateValues();
+                updateLocalStorage();
+
+                // Clear form fields
+                descriptionInput.value = '';
+                amountInput.value = '';
+            }
+
+            // Generate random ID
+            function generateID() {
+                return Math.floor(Math.random() * 100000000);
+            }
+
+            // Add transactions to DOM list
+            function addTransactionDOM(transaction) {
+                const item = document.createElement('li');
+
+                const sign = transaction.type === 'income' ? '+' : '-';
+                const colorClass = transaction.type === 'income' ? 'text-green-600' : 'text-red-600';
+
+                item.classList.add('flex', 'justify-between', 'items-center', 'p-3', 'border-b', 'transaction-item');
+                item.innerHTML = `
+                    <span class="capitalize">${transaction.description}</span>
+                    <div class="flex items-center">
+                        <span class="${colorClass} font-semibold">${sign}$${Math.abs(transaction.amount).toFixed(2)}</span>
+                        <button class="ml-4 text-gray-400 hover:text-red-500" onclick="removeTransaction(${transaction.id})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+
+                // Remove placeholder if it exists
+                const placeholder = transactionListEl.querySelector('.text-gray-500');
+                if (placeholder) {
+                    transactionListEl.innerHTML = '';
+                }
+
+                transactionListEl.appendChild(item);
+            }
+
+            // Remove transaction by ID
+            window.removeTransaction = function(id) {
+                transactions = transactions.filter(transaction => transaction.id !== id);
+                updateLocalStorage();
+                init();
+            }
+
+            // Update the balance, income, and expense
+            function updateValues() {
+                const amounts = transactions.map(transaction => transaction.type === 'income' ? transaction.amount : -transaction.amount);
+                const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
+                
+                const income = amounts
+                    .filter(item => item > 0)
+                    .reduce((acc, item) => (acc += item), 0)
+                    .toFixed(2);
+
+                const expense = (amounts
+                    .filter(item => item < 0)
+                    .reduce((acc, item) => (acc += item), 0) * -1)
+                    .toFixed(2);
+
+                balanceEl.innerText = `$${total}`;
+                incomeEl.innerText = `$${income}`;
+                expenseEl.innerText = `$${expense}`;
+
+                updateChart();
+            }
+
+            // Update local storage transactions
+            function updateLocalStorage() {
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+            }
+
+            // Chart.js Expense Chart
+            let expenseChart;
+            function updateChart() {
+                const expenseData = transactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((acc, transaction) => {
+                        const description = transaction.description.toLowerCase();
+                        if (!acc[description]) {
+                            acc[description] = 0;
+                        }
+                        acc[description] += transaction.amount;
+                        return acc;
+                    }, {});
+
+                const labels = Object.keys(expenseData);
+                const data = Object.values(expenseData);
+
+                const chartCtx = document.getElementById('expense-chart').getContext('2d');
+                if (expenseChart) {
+                    expenseChart.destroy();
+                }
+                
+                if (labels.length === 0) {
+                     // Display a message when there's no data
+                    chartCtx.font = "16px Inter";
+                    chartCtx.fillStyle = "#9ca3af";
+                    chartCtx.textAlign = "center";
+                    chartCtx.fillText("No expense data to display.", chartCtx.canvas.width / 2, chartCtx.canvas.height / 2);
+                    return;
+                }
+
+                expenseChart = new Chart(chartCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                        datasets: [{
+                            label: 'Expenses',
+                            data: data,
+                            backgroundColor: [
+                                '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6'
+                            ],
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: {
+                                        family: "'Inter', sans-serif"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Display a random financial tip
+            function displayRandomTip() {
+                const randomIndex = Math.floor(Math.random() * financialTips.length);
+                tipEl.textContent = financialTips[randomIndex];
+            }
+
+
+            // Init app
+            function init() {
+                transactionListEl.innerHTML = '';
+                 if (transactions.length === 0) {
+                    transactionListEl.innerHTML = '<li class="text-center text-gray-500 py-4">No transactions yet.</li>';
+                } else {
+                    transactions.forEach(addTransactionDOM);
+                }
+                updateValues();
+                displayRandomTip();
+            }
+
+            init();
+
+            // Event Listeners
+            form.addEventListener('submit', addTransaction);
+        });
+    </script>
+</body>
+</html>
